@@ -1,0 +1,107 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./zenith.sqlite"
+}
+
+model user {
+   id          Int       @default(autoincrement()) @id
+   fullname    String?
+   password    String?
+   email       String?   @unique
+   role        String    @default("inspector")
+   avatar_url  String?
+
+   items       items[]
+   session     session[]
+}
+
+model session {
+   id          Int      @default(autoincrement()) @id
+   session_id  String?
+   user_id     Int
+
+   user        user @relation(fields:[user_id], references: [id], onDelete: Cascade)
+
+}
+
+model build {
+  url                            String   @id
+  creation_date                  DateTime
+  classe                         String
+  lvl                            Int
+  name                           String
+  casque_url                     String?
+  amulette_url                   String?
+  plastron_url                   String?
+  anneau1_url                    String?
+  anneau2_url                    String?
+  bottes_url                     String?
+  cape_url                       String?
+  epaulettes_url                 String?
+  ceinture_url                   String?
+  dague_or_bouclier_or_armes_url String?
+  armes_url                      String?
+  embleme_url                    String?
+}
+
+model item_drop {
+  id       Int    @id @default(autoincrement())
+  url_item String
+  url_mob  String
+  rate     Float
+}
+
+model items {
+  url         String               @id
+  rarity      String
+  img         String
+  name        String
+  lvl         Int
+  type        String
+  have_recipe Unsupported("bool")?
+  is_dropable Unsupported("bool")?
+  user_id     Int
+
+  user	      user @relation(fields:[user_id],	references: [id], onDelete: Cascade)
+}
+
+model mobs {
+  url_mob String @id
+}
+
+model object_wakfu {
+  url_object String @id
+}
+
+model recipe_with_item {
+  id              Int    @id @default(autoincrement())
+  url_item_recipe String
+  url_item_used   String
+  quantity        Int
+}
+
+model recipe_with_object {
+  id              Int    @id @default(autoincrement())
+  url_object      String
+  url_item_recipe String
+  quantity        Int
+}
+
+model stat {
+  id         Int          @id @default(autoincrement())
+  quantity   Int
+  type       Int
+  stats_item stats_item[]
+}
+
+model stats_item {
+  id       Int    @id @default(autoincrement())
+  url_item String
+  id_stat  Int
+  stat     stat   @relation(fields: [id_stat], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
