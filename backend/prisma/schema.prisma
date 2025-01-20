@@ -15,7 +15,6 @@ model user {
    role        String    @default("inspector")
    avatar_url  String?
 
-   items       items[]
    session     session[]
 }
 
@@ -64,9 +63,6 @@ model items {
   type        String
   have_recipe Unsupported("bool")?
   is_dropable Unsupported("bool")?
-  user_id     Int
-
-  user	      user @relation(fields:[user_id],	references: [id], onDelete: Cascade)
 }
 
 model mobs {
