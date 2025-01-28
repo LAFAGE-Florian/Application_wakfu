@@ -24,6 +24,49 @@
         placeholder="230"
       />
     </label>
+
+    <!-- Sélection du type -->
+    <label>
+      Type :
+      <select v-model="type">
+        
+        <option value="">Tous</option>
+        <option value="Amulette">Amulette</option>
+        <option value="Anneau">Anneau</option>
+        <option value="Armes 1 main">Armes à une main</option>
+        <option value="Armes 2 Mains">Armes à deux mains</option>
+        <option value="Bottes">Bottes</option>
+        <option value="Bouclier">Bouclier</option>
+        <option value="Cape">Cape</option>
+        <option value="Casque">Casque</option>
+        <option value="Ceinture">Ceinture</option>
+        <option value="Dague">Dague</option>
+        <option value="Epaulettes">Epaulettes</option>
+        <option value="Plastron">Plastron</option>
+      </select>
+    </label>
+
+    <!-- Sélection de la rareté -->
+    <label>
+      Rareté :
+      <select v-model="rarity">
+        <option value="">Toutes</option>
+        <option value="common">Commun</option>
+        <option value="rare">Rare</option>
+        <option value="epic">Épique</option>
+        <option value="relic">Relic</option>
+        <option value="memory">Memory</option>
+        <option value="mythic">Mythique</option>
+        <option value="legendary">Légendaire</option>
+      </select>
+    </label>
+
+     <!-- Bouton de tri -->
+     <button @click="toggleSortOrder">
+      Trier : {{ sortOrder === 'asc' ? 'Croissant' : 'Décroissant' }}
+    </button>
+
+
     </div>
         <table class="table table-striped align-middle">
         <thead>
@@ -55,48 +98,82 @@
             </tr>
         </tbody>
         </table>
-        <!-- Pagination -->
-    <div class="pagination">
-        <button @click="prevPage" :disabled="currentPage === 1">Précédent</button>
-        <span>Page {{ currentPage }} / {{ totalPages }}</span>
-        <button @click="nextPage" :disabled="currentPage === totalPages">Suivant</button>
+
+       Pagination
+    <div>
+      <button :disabled="currentPage === 1" @click="prevPage">Précédent</button>
+      <span>Page {{ currentPage }} sur {{ totalPages }}</span>
+      <button :disabled="currentPage === totalPages" @click="nextPage">Suivant</button>
     </div>
+
 </template>
 
 <script setup>
+import { ref, onMounted, watch } from 'vue';
 
-    import { ref, onMounted } from "vue";
+// Références pour les données et les filtres
+const items = ref([]);
+const lvlMin = ref(1);
+const lvlMax = ref(230);
+const sortOrder = ref('asc'); // 'asc' pour croissant, 'desc' pour décroissant
+const type = ref("");
+const rarity = ref("");
+const totalPages = ref(0);
+const currentPage = ref(1);
+const totalItemsFilters = ref(0);
 
-    // Références pour les données de pagination et les articles
-    const items = ref([]);
-    const currentPage = ref(1);
-    const totalPages = ref(0);
+// nbres items par page
+const limit = ref(15);
 
-    // Fonction pour récupérer les items depuis l'API
-    const fetchItems = async (page) => {
-        const response = await fetch(`/api/items?page=${page}&limit=25`);
-        const data = await response.json();
+// Fonction pour récupérer les items filtrés depuis le backend
+const fetchItems = async () => {
+  const queryParams = new URLSearchParams({
+    lvlMin: lvlMin.value,
+    lvlMax: lvlMax.value,
+    type: type.value,
+    rarity: rarity.value,
+    page: currentPage.value,
+    limit: limit.value,
+    sortOrder: sortOrder.value,
+  });
 
-        items.value = data.items;
-        currentPage.value = data.currentPage;
-        totalPages.value = data.totalPages;
-    };
+    const response = await fetch(`/api/items?${queryParams}`);
+    const data = await response.json();
 
-    // Navigation entre les pages
-    const nextPage = () => {
-        if (currentPage.value < totalPages.value) {
-    fetchItems(currentPage.value + 1);
-        }
-    };
-    const prevPage = () => {
-        if (currentPage.value > 1) {
-    fetchItems(currentPage.value - 1);
-        }
-    };
+    // Mise à jour des données
+    items.value = data.items;
+    totalPages.value = data.totalPages;
+    totalItemsFilters.value = data.totalItems;
+};
 
-    // Récupère les articles au montage du composant
-    onMounted(() => fetchItems(currentPage.value));
+// Inverser l'ordre de tri
+const toggleSortOrder = () => {
+  sortOrder.value = sortOrder.value === "asc" ? "desc" : "asc";
+  fetchItems();
+};
 
+// Met à jour la liste chaque fois qu'un filtre change
+watch([lvlMin, lvlMax, type, rarity], fetchItems, { immediate: true });
+
+// Aller à la page suivante
+const nextPage = () => {
+  if (currentPage.value < totalPages.value) {
+    currentPage.value++;
+    fetchItems();
+  }
+};
+
+// Revenir à la page précédente
+const prevPage = () => {
+  if (currentPage.value > 1) {
+    currentPage.value--;
+    fetchItems();
+  }
+};
+
+
+// Appel initial pour récupérer les données
+onMounted(fetchItems);
 </script>
 
 <style>

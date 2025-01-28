@@ -27,32 +27,69 @@ app.get('/home', (req, res) => {
 
 })
 
-app.get('/api/items', async (req, res) => {
-   const { page = 1, limit = 25 } = req.query; // Obtenir les paramètres page et limit (valeurs par défaut)
-   console.log("Paramètres reçus dans la requête :", { page, limit });
-   const skip = parseInt((page - 1) * limit, 10); // Calcul de l'offset
-   const take = parseInt(limit, 10);
+
+app.get("/api/items", async (req, res) => {
    try {
+      const { 
+         lvlMin,
+         lvlMax,
+         type,
+         rarity,
+         page = 1,
+         limit = 15,
+         sortOrder = req.query.sortOrder || "asc",
+       } = req.query;
+       
+      // Conversion paramètres en nbres 
+      const pageInt = parseInt(page);
+      const limitInt = parseInt(limit);
+
+      // Création des filtres
+      const filters = {
+         lvl: {
+         gte: parseInt(lvlMin) || 1, // Niveau minimum par défaut : 1
+         lte: parseInt(lvlMax) || 230, // Niveau maximum par défaut : 230
+         },
+      };
+   
+      if (type) {
+         filters.type = type; // Filtrer par type si défini
+      }
+   
+      if (rarity) {
+         filters.rarity = rarity; // Filtrer par rareté si défini
+      }
+   
+      //Nbre total des items correspondant aux filtres
+      const totalItemsFilters = await prisma.items.count({
+         where: filters,
+      });
+
+
+      const totalPages = Math.ceil(totalItemsFilters / limitInt)
+
+      // Récupération des items filtrés
       const items = await prisma.items.findMany({
-        skip,
-        take,
+         where: filters,
+         skip: (pageInt - 1) * limitInt,
+         take: limitInt,
+         orderBy: {
+            lvl: sortOrder,
+         },
       });
-  
-      console.log("Articles récupérés :", items);
-  
-      const totalItems = await prisma.items.count();
-  
-      res.json({
-        items,
-        totalItems,
-        totalPages: Math.ceil(totalItems / limit),
-        currentPage: parseInt(page, 10),
-      });
-    } catch (error) {
-      console.error("Erreur lors de la récupération des articles :", error);
-      res.status(500).json({ error: "Erreur interne du serveur" });
-    }
-  });
+   
+      res.status(200).json({
+         items,
+         totalItemsFilters,
+         totalPages,
+         currentPage: pageInt,
+   });
+   } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "Erreur lors de la récupération des items" });
+   }
+   });
+
 
 ////////////////////////////////////////
 const PORT = 3001
