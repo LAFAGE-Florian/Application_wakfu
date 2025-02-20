@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Home from '/src/views/Home.vue'
-import Items  from '../views/Items.vue'
+import ItemList  from '../views/ItemList.vue'
+import ItemDetail from '../views/ItemDetail.vue'
 
 const routes = [
     {
@@ -12,10 +13,15 @@ const routes = [
       component: Home,
     },
     {
-      path : '/items',
-      component: Items,
-
-    }
+      path: '/items',
+      component: ItemList,
+    },
+    {
+      path: '/items/:id',
+      component: ItemDetail,
+      props: true
+    },
+       
  ]
  
  const router = createRouter({

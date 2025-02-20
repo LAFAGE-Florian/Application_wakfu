@@ -1,31 +1,50 @@
 <template>
 
-    <div>
-    <!-- Barre de sélection pour lvlMin -->
-    <label>
-      Niveau minimum :
-      <input 
-        type="number" 
+    <v-container>
+
+    <!-- Search bar -->
+    <v-row>
+      <v-col cols="12" md="6">
+        <v-text-field
+          v-model="searchQuery"
+          label="Rechercher un item"
+          @input="handleSearch"
+          clearable
+        />
+      </v-col>
+ 
+    <!-- Input lvlMin -->
+    <v-col cols="12" md="3">
+      <v-text-field
         v-model="lvlMin" 
-        :min="1" 
-        :max="230" 
+        label="Niveau minimum"
+        type="number"
+        min="1" 
+        max="230" 
         placeholder="1"
+        outlined
       />
-    </label>
-
-    <!-- Barre de sélection pour lvlMax -->
-    <label>
-      Niveau maximum :
-      <input 
-        type="number" 
+    </v-col>
+   
+    <!-- Input lvlMax -->
+    <v-col cols="12" md="3">
+      <v-text-field
         v-model="lvlMax" 
-        :min="1" 
-        :max="230" 
-        placeholder="230"
+        label="Niveau maximum"
+        type="number"
+        min="1" 
+        max="230" 
+        placeholder="1"
+        outlined
       />
-    </label>
+    </v-col>
+  </v-row>
 
-    <!-- Sélection du type -->
+
+
+
+
+    <!-- Sélection type -->
     <label>
       Type :
       <select v-model="type">
@@ -46,7 +65,7 @@
       </select>
     </label>
 
-    <!-- Sélection de la rareté -->
+    <!-- Sélection rareté -->
     <label>
       Rareté :
       <select v-model="rarity">
@@ -61,17 +80,16 @@
       </select>
     </label>
 
-     <!-- Bouton de tri -->
+     <!-- Ordre -->
      <button @click="toggleSortOrder">
       Trier : {{ sortOrder === 'asc' ? 'Croissant' : 'Décroissant' }}
     </button>
 
 
-    </div>
+  
         <table class="table table-striped align-middle">
         <thead>
             <tr>
-            <th scope="col">Url</th>
             <th scope="col">Rarity</th>
             <th scope="col">Img</th>
             <th scope="col">Name</th>
@@ -83,29 +101,27 @@
         </thead>
 
         <tbody>
-            <tr v-for="item in items" :key="item.url">
-            <!-- <td>{{ item.url }}</td> -->
+            <tr v-for="item in items" 
+            :key="item.url"
+            @click="$router.push(`/items/${getItemId(item.url)}`)"
+            style="cursor: pointer;">
+        
             <td>{{ item.rarity }}</td>
-            <td>
-                <img :src="item.img" alt="Image de l'item" width="50" height="50" />
-            </td>
+            <td><img :src="item.img" alt="Image de l'item" width="50" height="50" /></td>
             <td>{{ item.name }}</td>
             <td>{{ item.lvl }}</td>
             <td>{{ item.type }}</td>
-            <!-- <td>{{ item.have_recipe }}</td>
-            <td>{{ item.is_dropable }}</td>  -->
-
             </tr>
         </tbody>
         </table>
 
-       Pagination
+       <!-- Pagination -->
     <div>
       <button :disabled="currentPage === 1" @click="prevPage">Précédent</button>
       <span>Page {{ currentPage }} sur {{ totalPages }}</span>
       <button :disabled="currentPage === totalPages" @click="nextPage">Suivant</button>
     </div>
-
+</v-container>
 </template>
 
 <script setup>
@@ -118,15 +134,20 @@ const lvlMax = ref(230);
 const sortOrder = ref('asc'); // 'asc' pour croissant, 'desc' pour décroissant
 const type = ref("");
 const rarity = ref("");
-const totalPages = ref(0);
+const totalPages = ref(1);
 const currentPage = ref(1);
 const totalItemsFilters = ref(0);
+const searchQuery = ref("");
 
+let searchTimeout = null;
 // nbres items par page
 const limit = ref(15);
 
 // Fonction pour récupérer les items filtrés depuis le backend
 const fetchItems = async () => {
+  if (searchQuery.value.length < 3 && searchQuery.value.length > 0) {
+    return;
+  }
   const queryParams = new URLSearchParams({
     lvlMin: lvlMin.value,
     lvlMax: lvlMax.value,
@@ -135,15 +156,22 @@ const fetchItems = async () => {
     page: currentPage.value,
     limit: limit.value,
     sortOrder: sortOrder.value,
+    search: searchQuery.value,
   });
 
-    const response = await fetch(`/api/items?${queryParams}`);
-    const data = await response.json();
+  const response = await fetch(`/api/items?${queryParams}`);
+  const data = await response.json();
 
-    // Mise à jour des données
-    items.value = data.items;
-    totalPages.value = data.totalPages;
-    totalItemsFilters.value = data.totalItems;
+
+  // Mise à jour des données
+  items.value = data.items;
+  totalPages.value = data.totalPages;
+  totalItemsFilters.value = data.totalItems;
+};
+
+const handleSearch = () => {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(fetchItems, 300); // ⏳ Attendre 300ms avant de faire l'appel API
 };
 
 // Inverser l'ordre de tri
@@ -154,6 +182,12 @@ const toggleSortOrder = () => {
 
 // Met à jour la liste chaque fois qu'un filtre change
 watch([lvlMin, lvlMax, type, rarity], fetchItems, { immediate: true });
+
+// Récupère l'id de l'url
+const getItemId = (url) => {
+  const parts = url.split("/");
+  return parts[parts.length - 1];
+};
 
 // Aller à la page suivante
 const nextPage = () => {
