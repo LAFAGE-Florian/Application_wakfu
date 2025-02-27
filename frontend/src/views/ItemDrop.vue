@@ -1,0 +1,5 @@
+<template>
+
+    Hello drop
+
+</template>

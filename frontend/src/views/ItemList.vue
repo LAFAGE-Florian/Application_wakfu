@@ -107,7 +107,7 @@
             style="cursor: pointer;">
         
             <td>{{ item.rarity }}</td>
-            <td><img :src="item.img" alt="Image de l'item" width="50" height="50" /></td>
+            <td><img :src="item.img" alt="Image de l'item" width="80" height="80" /></td>
             <td>{{ item.name }}</td>
             <td>{{ item.lvl }}</td>
             <td>{{ item.type }}</td>
@@ -171,7 +171,7 @@ const fetchItems = async () => {
 
 const handleSearch = () => {
   clearTimeout(searchTimeout);
-  searchTimeout = setTimeout(fetchItems, 300); // ⏳ Attendre 300ms avant de faire l'appel API
+  searchTimeout = setTimeout(fetchItems, 300); // Attendre 300ms avant de faire l'appel API
 };
 
 // Inverser l'ordre de tri

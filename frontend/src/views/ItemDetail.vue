@@ -8,11 +8,21 @@
       <p><strong>Rareté :</strong> {{ item.rarity }}</p>
   
       <!-- Boutons dynamiques -->
-      <button :disabled="!item.have_recipe" class="btn" :class="{ disabled: !item.have_recipe }">
+      <button 
+        :disabled="!item.have_recipe" 
+        class="btn" 
+        :class="{ disabled: !item.have_recipe }"
+        @click="goToRecipePage"
+        >
         Recette
       </button>
   
-      <button :disabled="!item.is_dropable" class="btn" :class="{ disabled: !item.is_dropable }">
+      <button 
+        :disabled="!item.is_dropable" 
+        class="btn" 
+        :class="{ disabled: !item.is_dropable }"
+        @click="goToDropPage"
+        >
         Dropable
       </button>
   
@@ -34,9 +44,10 @@
   
   <script setup>
   import { ref, onMounted } from 'vue';
-  import { useRoute } from "vue-router";
+  import { useRoute, useRouter } from "vue-router";
   
   const route = useRoute ();
+  const router = useRouter ();
   const item = ref(null);
 
   const fetchItem = async () => {
@@ -56,6 +67,14 @@
   } catch (error) {
     console.error("Erreur fetchItem :", error);
   }
+};
+
+const goToDropPage = () => {
+  router.push(`/items/${route.params.id}/drop`);
+};
+
+const goToRecipePage = () => {
+  router.push(`/items/${route.params.id}/recipe`);
 };
 
 onMounted(fetchItem);
